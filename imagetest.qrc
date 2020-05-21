@@ -1,0 +1,16 @@
+<RCC>
+  <qresource prefix="newPrefix">
+    <file>logo1.jpg</file>
+    <file>logo.png</file>
+    <file>Capture 9.JPG</file>
+    <file>Capture 10.JPG</file>
+    <file>Capture 11.JPG</file>
+    <file>Save-icon.png</file>
+    <file>Undo-icon.png</file>
+    <file>Capture 6.JPG</file>
+    <file>Capture 7.JPG</file>
+    <file>Capture 8.JPG</file>
+    <file>Capture.JPG</file>
+    <file>Capture2.JPG</file>
+  </qresource>
+</RCC>
