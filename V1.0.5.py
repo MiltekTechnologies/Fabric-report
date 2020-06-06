@@ -7,6 +7,7 @@
 # WARNING! All changes made in this file will be lost!
 
 from PyQt5 import QtCore, QtGui, QtWidgets
+from PyQt5.QtWidgets import QMessageBox
 from PyQt5.QtCore import Qt
 from functools import partial
 import time
@@ -16,10 +17,6 @@ import requests
 import json
 
 
-# Things to implement 
-# 1. Button click should be added to a list along with the name or ID of the button 
-# 2. Undo should delete the last element of the list 
-# 3. Back button click should write the list to the csvfile
 
 
 
@@ -61,6 +58,8 @@ class Ui_FabricReport(object):
                 resp_retun=response.text
                 res = json.loads(resp_retun) 
                 self.Uniqueid= res.get('Unique_id')   # add/ pass id variable here
+                # self.SaveProceedButton.clicked.connect(partial(self.fault_select,"Selection"))
+                FabricReport.setCurrentIndex(1) 
             # print(Uniqueid)
             if(to_do=="OnBackButton"):
                 for i in range(len(self.list_faults)):
@@ -81,7 +80,14 @@ class Ui_FabricReport(object):
         
         except requests.exceptions.ConnectionError:
             # r.status_code = "Connection refused"
-            print(connectionerror)                   
+            warning= QMessageBox()
+            warning.setWindowTitle("Warning!")
+            warning.setText("Connection Error....Server Down")
+            warning.setIcon(QMessageBox.Critical)
+            
+            warning.exec_()
+            #FabricReport.setCurrentIndex(0) 
+            #print("connectionerror")                   
    
     def fault_select(self,fault):
         if (fault=="Selection"):
@@ -3454,7 +3460,7 @@ class Ui_FabricReport(object):
 
     #in mainpage
         self.SaveProceedButton.clicked.connect(partial(self.post1,"OnSaveAndProceed"))
-        self.SaveProceedButton.clicked.connect(partial(self.fault_select,"Selection"))
+        # self.SaveProceedButton.clicked.connect(partial(self.fault_select,"Selection"))
         self.ContinueButton.clicked.connect(partial(self.post1,"OnContinue"))
         self.ContinueButton.clicked.connect(partial(self.fault_select,"Selection"))
         
