@@ -7,7 +7,7 @@
 # WARNING! All changes made in this file will be lost!
 
 from PyQt5 import QtCore, QtGui, QtWidgets
-from PyQt5.QtWidgets import QMessageBox
+from PyQt5.QtWidgets import QMessageBox,QPushButton
 from PyQt5.QtCore import Qt
 from functools import partial
 import time
@@ -54,12 +54,22 @@ class Ui_FabricReport(object):
                     'Doffed_Shift':self.DoffEdit.text(),
                     }
                 
-                response = requests.post(url, headers=headers, data= post1data)
-                resp_retun=response.text
-                res = json.loads(resp_retun) 
-                self.Uniqueid= res.get('Unique_id')   # add/ pass id variable here
-                # self.SaveProceedButton.clicked.connect(partial(self.fault_select,"Selection"))
-                FabricReport.setCurrentIndex(1) 
+                if(len(self.LoomEdit.text())==0 or len(self.PieceEdit.text())==0 or len(self.SetEDit.text())==0 or len(self.BeamEdit.text())==0):
+                    self.ContinueButton.setEnabled(False)
+                    self.messagewarn("Some text field is empty",0)
+                    
+                else:            
+                    response = requests.post(url, headers=headers, data= post1data)
+                    resp_retun=response.text
+                    res = json.loads(resp_retun) 
+                    self.Uniqueid= res.get('Unique_id')   # add/ pass id variable here
+                    if self.Uniqueid == None:
+                        self.messagewarn("Authentication failed", 0)
+                    else:
+                        self.fault_select("Selection")
+              
+            
+
             # print(Uniqueid)
             if(to_do=="OnBackButton"):
                 for i in range(len(self.list_faults)):
@@ -77,18 +87,38 @@ class Ui_FabricReport(object):
                 
                 post4data={'Unique_id_continue': self.Uniqueid}
                 response = requests.post(url, headers=headers, data= post4data)
-        
+                resp_retun=response.text
+                res = json.loads(resp_retun) 
+                self.checkoncontinue= res.get('Unique_id_continue') 
+                if(self.checkoncontinue=="No"):
+                    self.messagewarn("UID doesn't Match", 0)
+                else:
+                    self.fault_select("Selection")
+            
         except requests.exceptions.ConnectionError:
             # r.status_code = "Connection refused"
-            warning= QMessageBox()
-            warning.setWindowTitle("Warning!")
-            warning.setText("Connection Error....Server Down")
-            warning.setIcon(QMessageBox.Critical)
-            
-            warning.exec_()
-            #FabricReport.setCurrentIndex(0) 
+            self.messagewarn("Connection Error....Check Server",0)
             #print("connectionerror")                   
    
+    #def Buttonenable(self):
+        #if((self.LoomEdit.text()).isEmpty()):
+            #self.UIDEdit.setEnabled(False)
+            #self.ContinueButton.setEnabled(False)
+        #else:
+            #self.fault_select("Selection")
+    def messagewarn(self,message,connect):
+        if(connect==0):
+            warning= QMessageBox()
+            warning.setWindowTitle("Warning!")
+            warning.setText(message)
+            warning.setIcon(QMessageBox.Critical)
+            warning.exec_()   
+        else:
+            if(len(self.UIDEdit.text()) > 0):
+                self.SaveProceedButton.setEnabled(False)
+                self.ContinueButton.setEnabled(True)
+           
+            
     def fault_select(self,fault):
         if (fault=="Selection"):
             f = open(self.Uniqueid+".csv",'a')
@@ -110,9 +140,16 @@ class Ui_FabricReport(object):
         if (fault=="Machine3"):
             FabricReport.setCurrentIndex(8)
         if (fault=="Exit"):
-            app = QtWidgets.QApplication(sys.argv)
-            app.closeAllWindows() 
-            #QtCore.QCoreApplication.instance.quit()
+            warn= QMessageBox()
+            warn.setWindowTitle("Warning!")
+            warn.setText("Do u Want to close?")
+            warn.setIcon(QMessageBox.Question)
+            warn.setStandardButtons(QMessageBox.Yes)
+            warn.addButton( QMessageBox.No)
+            warn.setDefaultButton(QMessageBox.No)
+            if warn.exec_()==QMessageBox.Yes:
+                app = QtWidgets.QApplication(sys.argv)
+                app.closeAllWindows() 
     def update_label(self,name,positive):
         if positive:
         #Sizing Fault buttons
@@ -778,12 +815,12 @@ class Ui_FabricReport(object):
         self.EPEdit.setStyleSheet("background-color: rgb(255, 255, 255);")
         self.EPEdit.setObjectName("EPEdit")
         self.SaveProceedButton = QtWidgets.QPushButton(self.MainPage)
-        self.SaveProceedButton.setGeometry(QtCore.QRect(370, 450, 331, 61))
+        self.SaveProceedButton.setGeometry(QtCore.QRect(70, 530, 571, 61))
         palette = QtGui.QPalette()
         brush = QtGui.QBrush(QtGui.QColor(0, 0, 0))
         brush.setStyle(QtCore.Qt.SolidPattern)
         palette.setBrush(QtGui.QPalette.Active, QtGui.QPalette.WindowText, brush)
-        brush = QtGui.QBrush(QtGui.QColor(170, 170, 255))
+        brush = QtGui.QBrush(QtGui.QColor(145, 143, 168))
         brush.setStyle(QtCore.Qt.SolidPattern)
         palette.setBrush(QtGui.QPalette.Active, QtGui.QPalette.Button, brush)
         brush = QtGui.QBrush(QtGui.QColor(128, 255, 0))
@@ -807,10 +844,10 @@ class Ui_FabricReport(object):
         brush = QtGui.QBrush(QtGui.QColor(0, 0, 0))
         brush.setStyle(QtCore.Qt.SolidPattern)
         palette.setBrush(QtGui.QPalette.Active, QtGui.QPalette.ButtonText, brush)
-        brush = QtGui.QBrush(QtGui.QColor(170, 170, 255))
+        brush = QtGui.QBrush(QtGui.QColor(145, 143, 168))
         brush.setStyle(QtCore.Qt.SolidPattern)
         palette.setBrush(QtGui.QPalette.Active, QtGui.QPalette.Base, brush)
-        brush = QtGui.QBrush(QtGui.QColor(170, 170, 255))
+        brush = QtGui.QBrush(QtGui.QColor(145, 143, 168))
         brush.setStyle(QtCore.Qt.SolidPattern)
         palette.setBrush(QtGui.QPalette.Active, QtGui.QPalette.Window, brush)
         brush = QtGui.QBrush(QtGui.QColor(0, 0, 0))
@@ -828,7 +865,7 @@ class Ui_FabricReport(object):
         brush = QtGui.QBrush(QtGui.QColor(0, 0, 0))
         brush.setStyle(QtCore.Qt.SolidPattern)
         palette.setBrush(QtGui.QPalette.Inactive, QtGui.QPalette.WindowText, brush)
-        brush = QtGui.QBrush(QtGui.QColor(170, 170, 255))
+        brush = QtGui.QBrush(QtGui.QColor(145, 143, 168))
         brush.setStyle(QtCore.Qt.SolidPattern)
         palette.setBrush(QtGui.QPalette.Inactive, QtGui.QPalette.Button, brush)
         brush = QtGui.QBrush(QtGui.QColor(128, 255, 0))
@@ -852,10 +889,10 @@ class Ui_FabricReport(object):
         brush = QtGui.QBrush(QtGui.QColor(0, 0, 0))
         brush.setStyle(QtCore.Qt.SolidPattern)
         palette.setBrush(QtGui.QPalette.Inactive, QtGui.QPalette.ButtonText, brush)
-        brush = QtGui.QBrush(QtGui.QColor(170, 170, 255))
+        brush = QtGui.QBrush(QtGui.QColor(145, 143, 168))
         brush.setStyle(QtCore.Qt.SolidPattern)
         palette.setBrush(QtGui.QPalette.Inactive, QtGui.QPalette.Base, brush)
-        brush = QtGui.QBrush(QtGui.QColor(170, 170, 255))
+        brush = QtGui.QBrush(QtGui.QColor(145, 143, 168))
         brush.setStyle(QtCore.Qt.SolidPattern)
         palette.setBrush(QtGui.QPalette.Inactive, QtGui.QPalette.Window, brush)
         brush = QtGui.QBrush(QtGui.QColor(0, 0, 0))
@@ -873,7 +910,7 @@ class Ui_FabricReport(object):
         brush = QtGui.QBrush(QtGui.QColor(0, 0, 0))
         brush.setStyle(QtCore.Qt.SolidPattern)
         palette.setBrush(QtGui.QPalette.Disabled, QtGui.QPalette.WindowText, brush)
-        brush = QtGui.QBrush(QtGui.QColor(170, 170, 255))
+        brush = QtGui.QBrush(QtGui.QColor(145, 143, 168))
         brush.setStyle(QtCore.Qt.SolidPattern)
         palette.setBrush(QtGui.QPalette.Disabled, QtGui.QPalette.Button, brush)
         brush = QtGui.QBrush(QtGui.QColor(128, 255, 0))
@@ -897,10 +934,10 @@ class Ui_FabricReport(object):
         brush = QtGui.QBrush(QtGui.QColor(0, 0, 0))
         brush.setStyle(QtCore.Qt.SolidPattern)
         palette.setBrush(QtGui.QPalette.Disabled, QtGui.QPalette.ButtonText, brush)
-        brush = QtGui.QBrush(QtGui.QColor(170, 170, 255))
+        brush = QtGui.QBrush(QtGui.QColor(145, 143, 168))
         brush.setStyle(QtCore.Qt.SolidPattern)
         palette.setBrush(QtGui.QPalette.Disabled, QtGui.QPalette.Base, brush)
-        brush = QtGui.QBrush(QtGui.QColor(170, 170, 255))
+        brush = QtGui.QBrush(QtGui.QColor(145, 143, 168))
         brush.setStyle(QtCore.Qt.SolidPattern)
         palette.setBrush(QtGui.QPalette.Disabled, QtGui.QPalette.Window, brush)
         brush = QtGui.QBrush(QtGui.QColor(0, 0, 0))
@@ -922,10 +959,10 @@ class Ui_FabricReport(object):
         font.setBold(True)
         font.setWeight(75)
         self.SaveProceedButton.setFont(font)
-        self.SaveProceedButton.setStyleSheet("background-color: rgb(170, 170, 255);")
+        self.SaveProceedButton.setStyleSheet("background-color: rgb(145, 143, 168);")
         self.SaveProceedButton.setObjectName("SaveProceedButton")
         self.MTRSC = QtWidgets.QLabel(self.MainPage)
-        self.MTRSC.setGeometry(QtCore.QRect(730, 440, 141, 71))
+        self.MTRSC.setGeometry(QtCore.QRect(390, 440, 141, 71))
         font = QtGui.QFont()
         font.setPointSize(14)
         font.setBold(True)
@@ -966,7 +1003,7 @@ class Ui_FabricReport(object):
         self.DoffEdit.setStyleSheet("background-color: rgb(255, 255, 255);")
         self.DoffEdit.setObjectName("DoffEdit")
         self.SoundEdit = QtWidgets.QLineEdit(self.MainPage)
-        self.SoundEdit.setGeometry(QtCore.QRect(900, 440, 141, 71))
+        self.SoundEdit.setGeometry(QtCore.QRect(550, 440, 141, 71))
         self.SoundEdit.setStyleSheet("background-color: rgb(255, 255, 255);")
         self.SoundEdit.setObjectName("SoundEdit")
         self.set = QtWidgets.QLabel(self.MainPage)
@@ -999,6 +1036,9 @@ class Ui_FabricReport(object):
         self.DateEdit.setGeometry(QtCore.QRect(60, 70, 141, 31))
         self.DateEdit.setStyleSheet("background-color: rgb(255, 255, 255);")
         self.DateEdit.setObjectName("DateEdit")
+        
+        #self.DateEdit.setText()
+        
         self.actualwidth = QtWidgets.QLabel(self.MainPage)
         self.actualwidth.setGeometry(QtCore.QRect(390, 120, 141, 71))
         font = QtGui.QFont()
@@ -1147,12 +1187,13 @@ class Ui_FabricReport(object):
 "color: rgb(243, 243, 243);")
         self.weftcount.setObjectName("weftcount")
         self.ContinueButton = QtWidgets.QPushButton(self.MainPage)
-        self.ContinueButton.setGeometry(QtCore.QRect(580, 530, 301, 61))
+        self.ContinueButton.setEnabled(False)
+        self.ContinueButton.setGeometry(QtCore.QRect(730, 530, 311, 61))
         palette = QtGui.QPalette()
         brush = QtGui.QBrush(QtGui.QColor(0, 0, 0))
         brush.setStyle(QtCore.Qt.SolidPattern)
         palette.setBrush(QtGui.QPalette.Active, QtGui.QPalette.WindowText, brush)
-        brush = QtGui.QBrush(QtGui.QColor(85, 255, 127))
+        brush = QtGui.QBrush(QtGui.QColor(0, 170, 0))
         brush.setStyle(QtCore.Qt.SolidPattern)
         palette.setBrush(QtGui.QPalette.Active, QtGui.QPalette.Button, brush)
         brush = QtGui.QBrush(QtGui.QColor(128, 255, 0))
@@ -1176,10 +1217,10 @@ class Ui_FabricReport(object):
         brush = QtGui.QBrush(QtGui.QColor(0, 0, 0))
         brush.setStyle(QtCore.Qt.SolidPattern)
         palette.setBrush(QtGui.QPalette.Active, QtGui.QPalette.ButtonText, brush)
-        brush = QtGui.QBrush(QtGui.QColor(85, 255, 127))
+        brush = QtGui.QBrush(QtGui.QColor(0, 170, 0))
         brush.setStyle(QtCore.Qt.SolidPattern)
         palette.setBrush(QtGui.QPalette.Active, QtGui.QPalette.Base, brush)
-        brush = QtGui.QBrush(QtGui.QColor(85, 255, 127))
+        brush = QtGui.QBrush(QtGui.QColor(0, 170, 0))
         brush.setStyle(QtCore.Qt.SolidPattern)
         palette.setBrush(QtGui.QPalette.Active, QtGui.QPalette.Window, brush)
         brush = QtGui.QBrush(QtGui.QColor(0, 0, 0))
@@ -1197,7 +1238,7 @@ class Ui_FabricReport(object):
         brush = QtGui.QBrush(QtGui.QColor(0, 0, 0))
         brush.setStyle(QtCore.Qt.SolidPattern)
         palette.setBrush(QtGui.QPalette.Inactive, QtGui.QPalette.WindowText, brush)
-        brush = QtGui.QBrush(QtGui.QColor(85, 255, 127))
+        brush = QtGui.QBrush(QtGui.QColor(0, 170, 0))
         brush.setStyle(QtCore.Qt.SolidPattern)
         palette.setBrush(QtGui.QPalette.Inactive, QtGui.QPalette.Button, brush)
         brush = QtGui.QBrush(QtGui.QColor(128, 255, 0))
@@ -1221,10 +1262,10 @@ class Ui_FabricReport(object):
         brush = QtGui.QBrush(QtGui.QColor(0, 0, 0))
         brush.setStyle(QtCore.Qt.SolidPattern)
         palette.setBrush(QtGui.QPalette.Inactive, QtGui.QPalette.ButtonText, brush)
-        brush = QtGui.QBrush(QtGui.QColor(85, 255, 127))
+        brush = QtGui.QBrush(QtGui.QColor(0, 170, 0))
         brush.setStyle(QtCore.Qt.SolidPattern)
         palette.setBrush(QtGui.QPalette.Inactive, QtGui.QPalette.Base, brush)
-        brush = QtGui.QBrush(QtGui.QColor(85, 255, 127))
+        brush = QtGui.QBrush(QtGui.QColor(0, 170, 0))
         brush.setStyle(QtCore.Qt.SolidPattern)
         palette.setBrush(QtGui.QPalette.Inactive, QtGui.QPalette.Window, brush)
         brush = QtGui.QBrush(QtGui.QColor(0, 0, 0))
@@ -1242,7 +1283,7 @@ class Ui_FabricReport(object):
         brush = QtGui.QBrush(QtGui.QColor(0, 0, 0))
         brush.setStyle(QtCore.Qt.SolidPattern)
         palette.setBrush(QtGui.QPalette.Disabled, QtGui.QPalette.WindowText, brush)
-        brush = QtGui.QBrush(QtGui.QColor(85, 255, 127))
+        brush = QtGui.QBrush(QtGui.QColor(0, 170, 0))
         brush.setStyle(QtCore.Qt.SolidPattern)
         palette.setBrush(QtGui.QPalette.Disabled, QtGui.QPalette.Button, brush)
         brush = QtGui.QBrush(QtGui.QColor(128, 255, 0))
@@ -1266,10 +1307,10 @@ class Ui_FabricReport(object):
         brush = QtGui.QBrush(QtGui.QColor(0, 0, 0))
         brush.setStyle(QtCore.Qt.SolidPattern)
         palette.setBrush(QtGui.QPalette.Disabled, QtGui.QPalette.ButtonText, brush)
-        brush = QtGui.QBrush(QtGui.QColor(85, 255, 127))
+        brush = QtGui.QBrush(QtGui.QColor(0, 170, 0))
         brush.setStyle(QtCore.Qt.SolidPattern)
         palette.setBrush(QtGui.QPalette.Disabled, QtGui.QPalette.Base, brush)
-        brush = QtGui.QBrush(QtGui.QColor(85, 255, 127))
+        brush = QtGui.QBrush(QtGui.QColor(0, 170, 0))
         brush.setStyle(QtCore.Qt.SolidPattern)
         palette.setBrush(QtGui.QPalette.Disabled, QtGui.QPalette.Window, brush)
         brush = QtGui.QBrush(QtGui.QColor(0, 0, 0))
@@ -1291,22 +1332,29 @@ class Ui_FabricReport(object):
         font.setBold(True)
         font.setWeight(75)
         self.ContinueButton.setFont(font)
-        self.ContinueButton.setStyleSheet("background-color: rgb(85, 255, 127);")
+        self.ContinueButton.setStyleSheet("background-color: rgb(0, 170, 0);")
         self.ContinueButton.setObjectName("ContinueButton")
         self.UID = QtWidgets.QLabel(self.MainPage)
-        self.UID.setGeometry(QtCore.QRect(170, 530, 141, 61))
+        self.UID.setGeometry(QtCore.QRect(730, 450, 141, 71))
         font = QtGui.QFont()
         font.setPointSize(14)
         font.setBold(True)
         font.setWeight(75)
         self.UID.setFont(font)
-        self.UID.setStyleSheet("background-color: rgb(170, 170, 255);\n"
+        self.UID.setStyleSheet("background-color: rgb(64, 153, 191);\n"
 "color: rgb(243, 243, 243);")
         self.UID.setObjectName("UID")
         self.UIDEdit = QtWidgets.QLineEdit(self.MainPage)
-        self.UIDEdit.setGeometry(QtCore.QRect(340, 530, 171, 61))
+        self.UIDEdit.setGeometry(QtCore.QRect(900, 450, 141, 71))
         self.UIDEdit.setStyleSheet("background-color: rgb(255, 255, 255);")
         self.UIDEdit.setObjectName("UIDEdit")
+        self.frame = QtWidgets.QFrame(self.MainPage)
+        self.frame.setGeometry(QtCore.QRect(710, 440, 351, 171))
+        self.frame.setStyleSheet("background-color: rgb(145, 143, 168);\n"
+"")
+        self.frame.setFrameShape(QtWidgets.QFrame.StyledPanel)
+        self.frame.setFrameShadow(QtWidgets.QFrame.Raised)
+        self.frame.setObjectName("frame")
         
         self.Logoframe = QtWidgets.QFrame(self.MainPage)
         self.Logoframe.setGeometry(QtCore.QRect(220, 20, 91, 91))
@@ -1317,10 +1365,56 @@ class Ui_FabricReport(object):
 "")
         self.Logoframe.setFrameShape(QtWidgets.QFrame.StyledPanel)
         self.Logoframe.setFrameShadow(QtWidgets.QFrame.Raised)
-        self.Logoframe.setObjectName("Logoframe")        
+        self.Logoframe.setObjectName("Logoframe") 
+        
+        self.mainpagelabel.raise_()
+        self.SetEDit.raise_()
+        self.ActEPI.raise_()
+        self.DofeEdit.raise_()
+        self.EPEdit.raise_()
+        self.SaveProceedButton.raise_()
+        self.MTRSC.raise_()
+        self.WeaveEdit.raise_()
+        self.Loom.raise_()
+        self.DoffedShift.raise_()
+        self.DoffEdit.raise_()
+        self.SoundEdit.raise_()
+        self.set.raise_()
+        self.descr.raise_()
+        self.BeamEdit.raise_()
+        self.DateEdit.raise_()
+        self.actualwidth.raise_()
+        self.Beamno.raise_()
+        self.WeftEdit.raise_()
+        self.PPEdit.raise_()
+        self.PieceEdit.raise_()
+        self.warpcount.raise_()
+        self.MTRS.raise_()
+        self.actPPI.raise_()
+        self.WidthEdit.raise_()
+        self.LoomEdit.raise_()
+        self.Date.raise_()
+        self.WarpEdit.raise_()
+        self.TimeEdit.raise_()
+        self.time.raise_()
+        self.piece.raise_()
+        self.title.raise_()
+        self.DescEdit.raise_()
+        self.weave.raise_()
+        self.weftcount.raise_()
+        self.frame.raise_()
+        self.UID.raise_()
+        self.UIDEdit.raise_()
+        self.ContinueButton.raise_()
+        
+        
+        self.UIDEdit.textChanged.connect(partial(self.messagewarn,"",1))
+               
         
         self.Logoframe.raise_()
         FabricReport.addWidget(self.MainPage)
+        
+        
         
 #==========================================FaultSelection Page============================
                  
@@ -1649,7 +1743,7 @@ class Ui_FabricReport(object):
         self.SizeButton.setObjectName("SizeButton")
         
         self.UIDlabeltext = QtWidgets.QLabel(self.FaultSelection)
-        self.UIDlabeltext.setGeometry(QtCore.QRect(460, 150, 61, 51))
+        self.UIDlabeltext.setGeometry(QtCore.QRect(460, 160, 171, 41))
         self.UIDlabeltext.setText("UID :")
         font = QtGui.QFont()
         font.setFamily("Arial")
@@ -1661,7 +1755,7 @@ class Ui_FabricReport(object):
         self.UIDlabeltext.setObjectName("UIDlabeltext")     
         
         self.UIDlabel = QtWidgets.QLabel(self.FaultSelection)
-        self.UIDlabel.setGeometry(QtCore.QRect(520, 150, 121, 51))
+        self.UIDlabel.setGeometry(QtCore.QRect(460, 210, 171, 41))
         #self.UIDlabel.setText("UID :")
         font = QtGui.QFont()
         font.setFamily("Arial")
@@ -1669,7 +1763,7 @@ class Ui_FabricReport(object):
         font.setBold(True)
         font.setWeight(75)
         self.UIDlabel.setFont(font)
-        self.UIDlabel.setStyleSheet("background-color: rgb(85, 170, 0);color: rgb(243, 243, 243);" )    
+        self.UIDlabel.setStyleSheet("background-color: rgb(255, 255, 255);" )    
         self.UIDlabel.setObjectName("UIDlabel")             
         
         self.UIDlabel.setAlignment(Qt.AlignCenter)
@@ -3460,13 +3554,13 @@ class Ui_FabricReport(object):
 
     #in mainpage
         self.SaveProceedButton.clicked.connect(partial(self.post1,"OnSaveAndProceed"))
-        # self.SaveProceedButton.clicked.connect(partial(self.fault_select,"Selection"))
+        #self.SaveProceedButton.clicked.connect(partial(self.fault_select,"Selection"))
         self.ContinueButton.clicked.connect(partial(self.post1,"OnContinue"))
-        self.ContinueButton.clicked.connect(partial(self.fault_select,"Selection"))
+        
         
     #in Faultselection
         
-        self.UIDlabel.setText("UID is")
+        #self.UIDlabel.setText("UID is")
         
         self.SizeButton.clicked.connect(partial(self.fault_select,"Sizing"))
         self.DyedButton.clicked.connect(partial(self.fault_select,"DyeYarn"))
